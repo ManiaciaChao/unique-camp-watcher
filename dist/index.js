@@ -27,14 +27,16 @@ const getUserRepoLatestCommit = async ({ user, repo }) => {
 (async () => {
     await login(config_json_1.auth);
     const today = getDate(new Date(Date.now()).toISOString());
-    for (const user of config_json_1.users) {
-        try {
-            const { message, committer: { date } } = await getUserRepoLatestCommit(user);
-            const log = `${user.name}(${user.user}): ${message} at ${date}`;
-            console.log(getDate(date) === today ? chalk_1.green(log) : log);
+    config_json_1.users.forEach(async (user) => {
+        {
+            try {
+                const { message, committer: { date } } = await getUserRepoLatestCommit(user);
+                const log = `${user.name}(${user.user}): ${message} [${date}]`;
+                console.log(getDate(date) === today ? chalk_1.green(log) : log);
+            }
+            catch (err) {
+                console.log(chalk_1.red(`${user.name}(${user.user}): ${err}`));
+            }
         }
-        catch (err) {
-            console.log(chalk_1.red(`${user.name}(${user.user}): ${err}`));
-        }
-    }
+    });
 })();

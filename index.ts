@@ -51,16 +51,18 @@ const getUserRepoLatestCommit = async ({ user, repo }: IUser) => {
 (async () => {
   await login(auth);
   const today = getDate(new Date(Date.now()).toISOString());
-  for (const user of users as IUser[]) {
-    try {
-      const {
-        message,
-        committer: { date }
-      } = await getUserRepoLatestCommit(user);
-      const log = `${user.name}(${user.user}): ${message} at ${date}`;
-      console.log(getDate(date) === today ? green(log) : log);
-    } catch (err) {
-      console.log(red(`${user.name}(${user.user}): ${err}`));
+  users.forEach(async user=>{
+    {
+      try {
+        const {
+          message,
+          committer: { date }
+        } = await getUserRepoLatestCommit(user);
+        const log = `${user.name}(${user.user}): ${message} [${date}]`;
+        console.log(getDate(date) === today ? green(log) : log);
+      } catch (err) {
+        console.log(red(`${user.name}(${user.user}): ${err}`));
+      }
     }
-  }
+  })
 })();
