@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { green, red } from "chalk";
+import { red,blue,green } from "chalk";
 import { auth, users } from "./config.json";
 
 interface IUser {
@@ -21,9 +21,6 @@ interface ICommit {
     date: string;
   };
 }
-
-const getDate = (ISOString: string) =>
-  (ISOString.match(/(.*)(?=T)/g) as string[])[0];
 
 const login = async ({ username, password }: IAuth) => {
   const secret = Buffer.from(`${username}:${password}`).toString("base64");
@@ -50,19 +47,19 @@ const getUserRepoLatestCommit = async ({ user, repo }: IUser) => {
 
 (async () => {
   await login(auth);
-  const today = getDate(new Date(Date.now()).toISOString());
-  users.forEach(async user=>{
+  const today = new Date().toLocaleDateString();
+  users.forEach(async user => {
     {
       try {
-        const {
-          message,
-          committer: { date }
-        } = await getUserRepoLatestCommit(user);
-        const log = `${user.name}(${user.user}): ${message} [${date}]`;
-        console.log(getDate(date) === today ? green(log) : log);
+        const { message, committer } = await getUserRepoLatestCommit(user);
+        const date = new Date(committer.date);
+        const log = `${user.name}(${
+          user.user
+        }): ${message} ${blue(date.toLocaleString())}`;
+        console.log(date.toLocaleDateString() === today ? green(log) : log);
       } catch (err) {
         console.log(red(`${user.name}(${user.user}): ${err}`));
       }
     }
-  })
+  });
 })();
