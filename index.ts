@@ -1,64 +1,46 @@
-import fetch from "node-fetch";
-import { red,blue,green } from "chalk";
-import { auth, users } from "./config.json";
-
-interface IUser {
-  name: string;
-  user: string;
-  repo: string;
-}
-
-interface IAuth {
-  username: string;
-  password: string;
-}
-
-interface ICommit {
-  message: string;
-  committer: {
-    name: string;
-    email: string;
-    date: string;
-  };
-}
-
-const login = async ({ username, password }: IAuth) => {
-  const secret = Buffer.from(`${username}:${password}`).toString("base64");
-  const resp = await (
-    await fetch("https://api.github.com/", {
-      headers: { Authorization: `Basic ${secret}` }
-    })
-  ).json();
-  if (resp.message) {
-    throw Error(resp.message);
-  }
-};
-
-const getUserRepoLatestCommit = async ({ user, repo }: IUser) => {
-  const resp = await (
-    await fetch(`https://api.github.com/repos/${user}/${repo}/commits`)
-  ).json();
-  if (resp.message) {
-    throw Error(resp.message);
-  }
-  const { message, committer } = resp[0].commit;
-  return { message, committer } as ICommit;
-};
+import { red, blue, green, gray } from "chalk";
+import { auth, users, fill } from "./config.json";
+import { login, getUserRepoCommits } from "./request";
+import { between, next, begin, end, today } from "./date";
 
 (async () => {
-  await login(auth);
-  const today = new Date().toLocaleDateString();
+  if (auth.need) {
+    await login(auth);
+  }
   users.forEach(async user => {
     {
       try {
-        const { message, committer } = await getUserRepoLatestCommit(user);
-        const date = new Date(committer.date);
-        const log = `${user.name}(${
-          user.user
-        }): ${message} ${blue(date.toLocaleString())}`;
-        console.log(date.toLocaleDateString() === today ? green(log) : log);
+        const commits = await getUserRepoCommits(user);
+        const commitDates = new Set<string>();
+        commits
+          .map(({ committer: { date } }) => new Date(date))
+          .filter(date => between(date, begin, next(end)))
+          .forEach(date => commitDates.add(date.toLocaleDateString()));
+
+        const status = [];
+        for (let day = begin; day <= end; day = next(day)) {
+          if (day >= today) {
+            status.push(gray(fill));
+            continue;
+          }
+          status.push(
+            commitDates.has(day.toLocaleDateString()) ? green(fill) : red(fill)
+          );
+        }
+
+        const latestCommit = commits[0];
+        const {
+          message,
+          committer: { date }
+        } = latestCommit;
+
+        console.log(
+          `${user.name}\t${status.join("")}\t${blue(
+            new Date(date).toLocaleString()
+          )}\t${message.trim()}`
+        );
       } catch (err) {
-        console.log(red(`${user.name}(${user.user}): ${err}`));
+        console.log(red(`${user.name}(${user.user}/${user.repo}): ${err}`));
       }
     }
   });

@@ -13,6 +13,12 @@
 yarn install
 ```
 
+## Build
+
+```sh
+yarn run build
+```
+
 ## Usage
 
 ```sh
@@ -22,12 +28,6 @@ vim config.json
 
 # run
 yarn run start
-```
-
-## Build
-
-```sh
-yarn run build
 ```
 
 ## Author

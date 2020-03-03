@@ -1,5 +1,8 @@
 {
+  "fill": "█",
+  "periods": ["2020-03-02", "2020-03-22"],
   "auth": {
+    "need": true,
     "username": "your username",
     "password": "your password"
   },
